@@ -1,0 +1,50 @@
+[
+  {
+    "asin": "B001E4KFG0",
+    "reviewText": "I have been using this coffee maker for 6 months now and it still works perfectly. The coffee tastes great and it heats up really fast. The build quality feels solid and the machine is very easy to clean.",
+    "summary": "Excellent coffee maker, heats up fast",
+    "rating": 5
+  },
+  {
+    "asin": "B001E4KFG0",
+    "reviewText": "Bought this for my office and everyone loves it. Makes a consistent cup every time. A bit loud when it starts but that goes away after 30 seconds. Would definitely recommend for small offices.",
+    "summary": "Great for the office",
+    "rating": 4
+  },
+  {
+    "asin": "B001E4KFG0",
+    "reviewText": "The machine stopped working after 3 months. Customer service was helpful and sent a replacement but it was disappointing for the price. The replacement has been working fine for 2 months now.",
+    "summary": "Broke after 3 months, replacement sent quickly",
+    "rating": 2
+  },
+  {
+    "asin": "B001E4KFG0",
+    "reviewText": "Very easy to set up. The instructions are clear and the first cup was ready in under 5 minutes. My only complaint is the water reservoir could be larger — I have to refill it every 2 cups.",
+    "summary": "Easy setup but small water tank",
+    "rating": 4
+  },
+  {
+    "asin": "B001E4KFG0",
+    "reviewText": "Not suitable for beginners. The settings are confusing and there is no clear guide in the box. I had to watch YouTube videos to understand how to use it properly. Once you figure it out the coffee is decent.",
+    "summary": "Confusing for first-time users",
+    "rating": 3
+  },
+  {
+    "asin": "B001E4KFG0",
+    "reviewText": "Perfect for beginners! Very intuitive interface. One button operation and you get a hot cup in 2 minutes. I am new to coffee machines and this was a breeze to use.",
+    "summary": "Great for beginners, very simple",
+    "rating": 5
+  },
+  {
+    "asin": "B001E4KFG0",
+    "reviewText": "The machine is very noisy. It woke up my baby every morning. The coffee quality is fine but I ended up returning it because of the noise.",
+    "summary": "Too noisy, returned",
+    "rating": 1
+  },
+  {
+    "asin": "B001E4KFG0",
+    "reviewText": "I use this daily. It has been 2 years and it still works like new. Very durable product. I also love that it is easy to clean — the parts are dishwasher safe.",
+    "summary": "Durable and easy to clean after 2 years",
+    "rating": 5
+  }
+]
