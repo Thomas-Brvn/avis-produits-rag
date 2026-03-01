@@ -18,17 +18,13 @@ Un pipeline de Génération Augmentée par Récupération (RAG) qui analyse les 
 
 ## Architecture
 
-```
-Requête utilisateur
-        |
-        v
-sentence-transformers  -->  ChromaDB (base vectorielle locale)
-                                    |
-                          Top-k avis récupérés
-                                    |
-                      Llama3 via Ollama + prompt
-                                    |
-                          Réponse contextualisée
+```mermaid
+flowchart TD
+    A([Requête utilisateur]) --> B[sentence-transformers\nEmbedding de la requête]
+    B --> C[(ChromaDB\nBase vectorielle locale)]
+    C --> D[Top-k avis récupérés]
+    D --> E[Llama3 via Ollama\nGénération avec prompt]
+    E --> F([Réponse contextualisée])
 ```
 
 ## Stack technique
