@@ -9,83 +9,83 @@ from src.llm_chain import ReviewQAChain
 import config
 
 
-st.set_page_config(page_title="Product Review RAG", layout="wide")
-st.title("Product Review RAG")
-st.caption("Ask questions about a product based on real customer reviews — powered by Llama3 running locally.")
+st.set_page_config(page_title="RAG Avis Produits", layout="wide")
+st.title("RAG Avis Produits")
+st.caption("Posez des questions sur un produit à partir de vrais avis clients — propulsé par Llama3 en local.")
 
 
 @st.cache_resource
-def load_chain():
+def charger_chaine():
     store = ReviewVectorStore()
     retriever = ReviewRetriever(store=store)
     return ReviewQAChain(retriever=retriever), store
 
 
-chain, store = load_chain()
+chaine, store = charger_chaine()
 
 
 with st.sidebar:
-    st.header("Index reviews")
+    st.header("Indexer les avis")
 
-    uploaded = st.file_uploader("Upload a review file (CSV or JSON)", type=["csv", "json"])
+    fichier = st.file_uploader("Importer un fichier d'avis (CSV ou JSON)", type=["csv", "json"])
 
-    use_sample = st.checkbox("Use sample reviews (data/sample_reviews.json)", value=True)
+    utiliser_exemple = st.checkbox("Utiliser les avis exemples (data/sample_reviews.json)", value=True)
 
-    if st.button("Index"):
+    if st.button("Indexer"):
         loader = ReviewLoader()
         preprocessor = ReviewPreprocessor()
 
-        if uploaded is not None:
-            suffix = Path(uploaded.name).suffix.lower()
-            tmp_path = Path(config.RAW_DATA_PATH) / uploaded.name
+        if fichier is not None:
+            suffix = Path(fichier.name).suffix.lower()
+            tmp_path = Path(config.RAW_DATA_PATH) / fichier.name
             tmp_path.parent.mkdir(parents=True, exist_ok=True)
             with open(tmp_path, "wb") as f:
-                f.write(uploaded.read())
-            df = loader.load(uploaded.name)
-        elif use_sample:
+                f.write(fichier.read())
+            df = loader.load(fichier.name)
+        elif utiliser_exemple:
             import json, pandas as pd
             with open("data/sample_reviews.json", "r") as f:
                 df = pd.DataFrame(json.load(f))
         else:
-            st.warning("No file selected.")
+            st.warning("Aucun fichier sélectionné.")
             st.stop()
 
-        df = preprocessor.clean(df)
-        docs = preprocessor.to_documents(df)
-        store.reset()
-        store.add_documents(docs)
-        st.success(f"Indexed {len(docs)} chunks from {len(df)} reviews.")
+        df = preprocessor.nettoyer(df)
+        docs = preprocessor.vers_documents(df)
+        store.reinitialiser()
+        store.ajouter_documents(docs)
+        st.success(f"{len(docs)} morceaux indexés depuis {len(df)} avis.")
 
-    st.metric("Chunks in store", store.count())
+    st.metric("Morceaux dans la base", store.compter())
 
     st.divider()
     mode = st.radio(
         "Mode",
-        [ReviewQAChain.MODE_QA, ReviewQAChain.MODE_FAQ, ReviewQAChain.MODE_SUMMARIZE],
-        format_func=lambda x: {"qa": "Q&A", "faq": "FAQ", "summarize": "Summarize"}.get(x, x),
+        [ReviewQAChain.MODE_QA, ReviewQAChain.MODE_FAQ, ReviewQAChain.MODE_RESUME],
+        format_func=lambda x: {"qa": "Q&R", "faq": "FAQ", "summarize": "Résumé"}.get(x, x),
     )
-    filter_rating = st.slider("Minimum rating filter (0 = no filter)", 0, 5, 0)
+    filtre_note = st.slider("Filtre note minimale (0 = pas de filtre)", 0, 5, 0)
 
 
-question = st.text_input("Your question", placeholder="Is this product suitable for beginners?")
+question = st.text_input("Votre question", placeholder="Ce produit convient-il aux débutants ?")
 
-if st.button("Ask", type="primary") and question:
-    if store.count() == 0:
-        st.error("No reviews indexed yet. Use the sidebar to index reviews first.")
+if st.button("Demander", type="primary") and question:
+    if store.compter() == 0:
+        st.error("Aucun avis indexé. Utilisez le panneau latéral pour indexer des avis d'abord.")
     else:
-        with st.spinner("Thinking..."):
-            result = chain.run(
+        with st.spinner("Analyse en cours..."):
+            resultat = chaine.executer(
                 question=question,
                 mode=mode,
-                filter_rating=filter_rating if filter_rating > 0 else None,
+                filtre_note=filtre_note if filtre_note > 0 else None,
             )
 
-        st.subheader("Answer")
-        st.write(result["answer"])
+        st.subheader("Réponse")
+        st.write(resultat["answer"])
 
-        with st.expander("Source reviews used"):
-            for i, src in enumerate(result["sources"], 1):
-                rating = src["metadata"].get("rating", "?")
-                st.markdown(f"**Review {i}** (rating {rating}/5)")
+        with st.expander("Avis sources utilisés"):
+            for i, src in enumerate(resultat["sources"], 1):
+                note = src["metadata"].get("note", "?")
+                st.markdown(f"**Avis {i}** (note {note}/5)")
                 st.write(src["text"])
                 st.divider()

@@ -1,8 +1,8 @@
 """
-Evaluation script for the RAG pipeline.
+Script d'évaluation du pipeline RAG.
 
-Measures retrieval relevance and answer quality on a small labeled dataset.
-Run with:  python evaluate.py
+Mesure la pertinence de la récupération et la qualité des réponses sur un petit jeu de données annoté.
+Lancer avec :  python evaluate.py
 """
 
 import json
@@ -16,107 +16,107 @@ from src.preprocessor import ReviewPreprocessor
 
 
 # ---------------------------------------------------------------------------
-# Labeled evaluation set
+# Jeu d'évaluation annoté
 # ---------------------------------------------------------------------------
 
-EVAL_SET = [
+JEU_EVALUATION = [
     {
-        "question": "Is this product suitable for beginners?",
-        "expected_keywords": ["beginner", "easy", "simple", "intuitive"],
+        "question": "Ce produit convient-il aux débutants ?",
+        "mots_cles_attendus": ["débutant", "facile", "simple", "intuitif"],
     },
     {
-        "question": "How durable is this product?",
-        "expected_keywords": ["durable", "years", "still works", "solid"],
+        "question": "Ce produit est-il solide et durable ?",
+        "mots_cles_attendus": ["durable", "années", "fonctionne encore", "solide"],
     },
     {
-        "question": "Is the product noisy?",
-        "expected_keywords": ["noisy", "noise", "loud", "quiet"],
+        "question": "Ce produit est-il bruyant ?",
+        "mots_cles_attendus": ["bruyant", "bruit", "fort", "silencieux"],
     },
     {
-        "question": "How easy is it to clean?",
-        "expected_keywords": ["clean", "dishwasher", "easy to clean"],
+        "question": "Est-il facile à nettoyer ?",
+        "mots_cles_attendus": ["nettoyer", "lave-vaisselle", "facile à nettoyer"],
     },
 ]
 
 
 @dataclass
-class EvalResult:
+class ResultatEval:
     question: str
-    answer: str
-    retrieved_count: int
-    keyword_hits: list[str] = field(default_factory=list)
-    keyword_score: float = 0.0
+    reponse: str
+    nb_recuperes: int
+    mots_cles_trouves: list[str] = field(default_factory=list)
+    score_mots_cles: float = 0.0
 
 
-def keyword_recall(answer: str, keywords: list[str]) -> tuple[list[str], float]:
-    answer_lower = answer.lower()
-    hits = [k for k in keywords if k.lower() in answer_lower]
-    score = len(hits) / len(keywords) if keywords else 0.0
-    return hits, score
+def rappel_mots_cles(reponse: str, mots_cles: list[str]) -> tuple[list[str], float]:
+    reponse_lower = reponse.lower()
+    trouves = [m for m in mots_cles if m.lower() in reponse_lower]
+    score = len(trouves) / len(mots_cles) if mots_cles else 0.0
+    return trouves, score
 
 
-def run_evaluation() -> None:
-    # Index sample reviews
+def lancer_evaluation() -> None:
+    # Indexation des avis exemples
     loader = ReviewLoader(data_path="data")
     preprocessor = ReviewPreprocessor()
     df = loader.load_json("sample_reviews.json")
-    df = preprocessor.clean(df)
-    docs = preprocessor.to_documents(df)
+    df = preprocessor.nettoyer(df)
+    docs = preprocessor.vers_documents(df)
 
     store = ReviewVectorStore()
-    store.reset()
-    store.add_documents(docs)
-    print(f"Indexed {len(docs)} chunks.\n")
+    store.reinitialiser()
+    store.ajouter_documents(docs)
+    print(f"{len(docs)} morceaux indexés.\n")
 
     retriever = ReviewRetriever(store=store)
-    chain = ReviewQAChain(retriever=retriever)
+    chaine = ReviewQAChain(retriever=retriever)
 
-    results: list[EvalResult] = []
+    resultats: list[ResultatEval] = []
 
-    for item in EVAL_SET:
+    for item in JEU_EVALUATION:
         question = item["question"]
-        keywords = item["expected_keywords"]
-        print(f"Q: {question}")
+        mots_cles = item["mots_cles_attendus"]
+        print(f"Q : {question}")
 
-        output = chain.run(question=question, mode="qa")
-        answer = output["answer"]
-        sources = output["sources"]
+        sortie = chaine.executer(question=question, mode="qa")
+        reponse = sortie["answer"]
+        sources = sortie["sources"]
 
-        hits, score = keyword_recall(answer, keywords)
-        result = EvalResult(
+        trouves, score = rappel_mots_cles(reponse, mots_cles)
+        resultat = ResultatEval(
             question=question,
-            answer=answer,
-            retrieved_count=len(sources),
-            keyword_hits=hits,
-            keyword_score=score,
+            reponse=reponse,
+            nb_recuperes=len(sources),
+            mots_cles_trouves=trouves,
+            score_mots_cles=score,
         )
-        results.append(result)
+        resultats.append(resultat)
 
-        print(f"  Answer: {answer[:120]}...")
-        print(f"  Keyword recall: {score:.0%} ({hits})")
-        print(f"  Retrieved: {result.retrieved_count} chunks\n")
+        print(f"  Réponse : {reponse[:120]}...")
+        print(f"  Rappel mots-clés : {score:.0%} ({trouves})")
+        print(f"  Récupérés : {resultat.nb_recuperes} morceaux\n")
 
-    avg_score = sum(r.keyword_score for r in results) / len(results)
-    print(f"Average keyword recall: {avg_score:.0%}")
+    score_moyen = sum(r.score_mots_cles for r in resultats) / len(resultats)
+    print(f"Rappel moyen des mots-clés : {score_moyen:.0%}")
 
-    with open("eval_results.json", "w") as f:
+    with open("eval_resultats.json", "w", encoding="utf-8") as f:
         json.dump(
             [
                 {
                     "question": r.question,
-                    "answer": r.answer,
-                    "keyword_hits": r.keyword_hits,
-                    "keyword_score": r.keyword_score,
-                    "retrieved_count": r.retrieved_count,
+                    "reponse": r.reponse,
+                    "mots_cles_trouves": r.mots_cles_trouves,
+                    "score_mots_cles": r.score_mots_cles,
+                    "nb_recuperes": r.nb_recuperes,
                 }
-                for r in results
+                for r in resultats
             ],
             f,
             indent=2,
             ensure_ascii=False,
         )
-    print("Results saved to eval_results.json")
+    print("Résultats sauvegardés dans eval_resultats.json")
 
 
 if __name__ == "__main__":
-    run_evaluation()
+    lancer_evaluation()

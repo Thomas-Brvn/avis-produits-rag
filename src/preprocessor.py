@@ -6,7 +6,7 @@ import config
 
 
 class ReviewPreprocessor:
-    """Clean and chunk reviews for indexing."""
+    """Nettoie et découpe les avis pour l'indexation."""
 
     def __init__(
         self,
@@ -21,48 +21,56 @@ class ReviewPreprocessor:
             separators=["\n\n", "\n", ". ", " ", ""],
         )
 
-    def clean(self, df: pd.DataFrame) -> pd.DataFrame:
+    def nettoyer(self, df: pd.DataFrame) -> pd.DataFrame:
         df = df.copy()
         df = df.dropna(subset=[config.REVIEW_TEXT_COL])
-        df[config.REVIEW_TEXT_COL] = df[config.REVIEW_TEXT_COL].apply(self._clean_text)
+        df[config.REVIEW_TEXT_COL] = df[config.REVIEW_TEXT_COL].apply(self._nettoyer_texte)
         df = df[df[config.REVIEW_TEXT_COL].str.len() > 20]
         if self.min_rating is not None:
             df = df[df[config.REVIEW_RATING_COL] >= self.min_rating]
         df = df.reset_index(drop=True)
         return df
 
-    def to_documents(self, df: pd.DataFrame) -> list[dict]:
-        """Convert rows to document dicts with text + metadata."""
+    # Alias pour compatibilité avec l'interface existante
+    def clean(self, df: pd.DataFrame) -> pd.DataFrame:
+        return self.nettoyer(df)
+
+    def vers_documents(self, df: pd.DataFrame) -> list[dict]:
+        """Convertit les lignes en dicts avec texte et métadonnées."""
         documents = []
         for _, row in df.iterrows():
-            text = self._build_text(row)
-            metadata = {
+            texte = self._construire_texte(row)
+            metadonnees = {
                 "asin": str(row.get(config.REVIEW_PRODUCT_COL, "")),
-                "rating": float(row.get(config.REVIEW_RATING_COL, 0)),
-                "summary": str(row.get(config.REVIEW_SUMMARY_COL, "")),
+                "note": float(row.get(config.REVIEW_RATING_COL, 0)),
+                "resume": str(row.get(config.REVIEW_SUMMARY_COL, "")),
             }
-            chunks = self.splitter.split_text(text)
-            for chunk in chunks:
-                documents.append({"text": chunk, "metadata": metadata})
+            morceaux = self.splitter.split_text(texte)
+            for morceau in morceaux:
+                documents.append({"text": morceau, "metadata": metadonnees})
         return documents
 
-    def _build_text(self, row: pd.Series) -> str:
-        summary = row.get(config.REVIEW_SUMMARY_COL, "")
-        body = row.get(config.REVIEW_TEXT_COL, "")
-        rating = row.get(config.REVIEW_RATING_COL, "")
-        parts = []
-        if summary:
-            parts.append(f"Summary: {summary}")
-        if rating:
-            parts.append(f"Rating: {rating}/5")
-        if body:
-            parts.append(f"Review: {body}")
-        return "\n".join(parts)
+    # Alias pour compatibilité avec l'interface existante
+    def to_documents(self, df: pd.DataFrame) -> list[dict]:
+        return self.vers_documents(df)
+
+    def _construire_texte(self, row: pd.Series) -> str:
+        resume = row.get(config.REVIEW_SUMMARY_COL, "")
+        corps = row.get(config.REVIEW_TEXT_COL, "")
+        note = row.get(config.REVIEW_RATING_COL, "")
+        parties = []
+        if resume:
+            parties.append(f"Résumé : {resume}")
+        if note:
+            parties.append(f"Note : {note}/5")
+        if corps:
+            parties.append(f"Avis : {corps}")
+        return "\n".join(parties)
 
     @staticmethod
-    def _clean_text(text: str) -> str:
-        text = str(text)
-        text = re.sub(r"<[^>]+>", " ", text)
-        text = re.sub(r"http\S+", "", text)
-        text = re.sub(r"\s+", " ", text)
-        return text.strip()
+    def _nettoyer_texte(texte: str) -> str:
+        texte = str(texte)
+        texte = re.sub(r"<[^>]+>", " ", texte)
+        texte = re.sub(r"http\S+", "", texte)
+        texte = re.sub(r"\s+", " ", texte)
+        return texte.strip()

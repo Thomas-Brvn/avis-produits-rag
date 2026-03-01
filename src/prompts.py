@@ -1,35 +1,35 @@
-REVIEW_QA_PROMPT = """You are a helpful assistant that answers questions about a product based on real customer reviews.
+REVIEW_QA_PROMPT = """Tu es un assistant qui répond aux questions sur un produit en te basant sur de vrais avis clients.
 
-Use only the information provided in the reviews below to answer the question. If the reviews do not contain enough information to answer confidently, say so clearly.
+Utilise uniquement les informations contenues dans les avis ci-dessous pour répondre à la question. Si les avis ne contiennent pas assez d'informations pour répondre avec confiance, dis-le clairement.
 
-Customer reviews:
+Avis clients :
 {context}
 
-Question: {question}
+Question : {question}
 
-Answer:"""
+Réponse :"""
 
 
-FAQ_PROMPT = """You are a helpful assistant that generates a clear, concise FAQ answer based on what real customers have said about a product.
+FAQ_PROMPT = """Tu es un assistant qui génère des réponses claires et concises à des questions FAQ, en te basant sur ce que de vrais clients ont dit d'un produit.
 
-Use only the information provided in the reviews below. Group similar points together and avoid repetition.
+Utilise uniquement les informations contenues dans les avis ci-dessous. Regroupe les points similaires et évite les répétitions.
 
-Customer reviews:
+Avis clients :
 {context}
 
-FAQ question: {question}
+Question FAQ : {question}
 
-Answer:"""
+Réponse :"""
 
 
-SUMMARIZE_PROMPT = """You are a helpful assistant that summarizes customer reviews for a product.
+SUMMARIZE_PROMPT = """Tu es un assistant qui résume les avis clients d'un produit.
 
-Based on the reviews below, provide:
-1. A brief overall summary (2-3 sentences)
-2. Main strengths mentioned by customers
-3. Main weaknesses or complaints mentioned by customers
+En te basant sur les avis ci-dessous, fournis :
+1. Un résumé général court (2-3 phrases)
+2. Les principaux points forts mentionnés par les clients
+3. Les principaux points faibles ou réclamations mentionnés par les clients
 
-Customer reviews:
+Avis clients :
 {context}
 
-Summary:"""
+Résumé :"""

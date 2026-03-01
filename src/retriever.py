@@ -3,7 +3,7 @@ from src.vector_store import ReviewVectorStore
 
 
 class ReviewRetriever:
-    """Retrieve relevant reviews from the vector store."""
+    """Recherche les avis pertinents dans la base vectorielle."""
 
     def __init__(
         self,
@@ -13,29 +13,37 @@ class ReviewRetriever:
         self.store = store or ReviewVectorStore()
         self.max_results = max_results
 
-    def retrieve(self, query: str, filter_rating: float | None = None) -> list[dict]:
+    def rechercher(self, requete: str, filtre_note: float | None = None) -> list[dict]:
         """
-        Retrieve top-k reviews for a query.
+        Retourne les k avis les plus pertinents pour une requête.
 
         Args:
-            query: The user question or search string.
-            filter_rating: If set, only return reviews with rating >= this value.
+            requete: La question ou la chaîne de recherche de l'utilisateur.
+            filtre_note: Si défini, retourne uniquement les avis avec une note >= cette valeur.
 
         Returns:
-            List of dicts with keys: text, metadata, distance.
+            Liste de dicts avec les clés : text, metadata, distance.
         """
-        results = self.store.query(query, n_results=self.max_results * 2)
-        if filter_rating is not None:
-            results = [
-                r for r in results
-                if r["metadata"].get("rating", 0) >= filter_rating
+        resultats = self.store.rechercher(requete, n_resultats=self.max_results * 2)
+        if filtre_note is not None:
+            resultats = [
+                r for r in resultats
+                if r["metadata"].get("note", 0) >= filtre_note
             ]
-        return results[: self.max_results]
+        return resultats[: self.max_results]
 
-    def format_context(self, results: list[dict]) -> str:
-        """Format retrieved reviews into a context string for the LLM."""
-        parts = []
-        for i, r in enumerate(results, 1):
-            rating = r["metadata"].get("rating", "?")
-            parts.append(f"[Review {i} - Rating {rating}/5]\n{r['text']}")
-        return "\n\n".join(parts)
+    # Alias pour compatibilité avec l'interface existante
+    def retrieve(self, requete: str, filter_rating: float | None = None) -> list[dict]:
+        return self.rechercher(requete, filtre_note=filter_rating)
+
+    def formater_contexte(self, resultats: list[dict]) -> str:
+        """Formate les avis récupérés en une chaîne de contexte pour le LLM."""
+        parties = []
+        for i, r in enumerate(resultats, 1):
+            note = r["metadata"].get("note", "?")
+            parties.append(f"[Avis {i} - Note {note}/5]\n{r['text']}")
+        return "\n\n".join(parties)
+
+    # Alias pour compatibilité avec l'interface existante
+    def format_context(self, resultats: list[dict]) -> str:
+        return self.formater_contexte(resultats)

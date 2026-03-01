@@ -8,9 +8,9 @@ from src.embeddings import LocalEmbedder
 
 
 class ReviewVectorStore:
-    """ChromaDB-backed vector store for product reviews."""
+    """Base vectorielle ChromaDB pour les avis produits."""
 
-    COLLECTION_NAME = "product_reviews"
+    NOM_COLLECTION = "avis_produits"
 
     def __init__(
         self,
@@ -21,48 +21,64 @@ class ReviewVectorStore:
         self.embedder = embedder or LocalEmbedder()
         self.client = chromadb.PersistentClient(path=persist_path)
         self.collection = self.client.get_or_create_collection(
-            name=self.COLLECTION_NAME,
+            name=self.NOM_COLLECTION,
             metadata={"hnsw:space": "cosine"},
         )
 
-    def add_documents(self, documents: list[dict]) -> None:
-        """Index a list of document dicts (text + metadata)."""
+    def ajouter_documents(self, documents: list[dict]) -> None:
+        """Indexe une liste de documents (texte + métadonnées)."""
         if not documents:
             return
-        texts = [d["text"] for d in documents]
-        metadatas = [d["metadata"] for d in documents]
+        textes = [d["text"] for d in documents]
+        metadonnees = [d["metadata"] for d in documents]
         ids = [str(uuid.uuid4()) for _ in documents]
-        embeddings = self.embedder.embed(texts)
+        embeddings = self.embedder.encoder(textes)
         self.collection.add(
             ids=ids,
             embeddings=embeddings,
-            documents=texts,
-            metadatas=metadatas,
+            documents=textes,
+            metadatas=metadonnees,
         )
 
-    def query(self, query_text: str, n_results: int = config.MAX_RESULTS) -> list[dict]:
-        """Return top-k matching documents for a query."""
-        query_vec = self.embedder.embed_query(query_text)
-        results = self.collection.query(
-            query_embeddings=[query_vec],
-            n_results=n_results,
+    # Alias pour compatibilité avec l'interface existante
+    def add_documents(self, documents: list[dict]) -> None:
+        return self.ajouter_documents(documents)
+
+    def rechercher(self, texte_requete: str, n_resultats: int = config.MAX_RESULTS) -> list[dict]:
+        """Retourne les k documents les plus proches pour une requête."""
+        vecteur_requete = self.embedder.encoder_requete(texte_requete)
+        resultats = self.collection.query(
+            query_embeddings=[vecteur_requete],
+            n_results=n_resultats,
             include=["documents", "metadatas", "distances"],
         )
-        output = []
-        for text, meta, dist in zip(
-            results["documents"][0],
-            results["metadatas"][0],
-            results["distances"][0],
+        sortie = []
+        for texte, meta, dist in zip(
+            resultats["documents"][0],
+            resultats["metadatas"][0],
+            resultats["distances"][0],
         ):
-            output.append({"text": text, "metadata": meta, "distance": dist})
-        return output
+            sortie.append({"text": texte, "metadata": meta, "distance": dist})
+        return sortie
 
-    def count(self) -> int:
+    # Alias pour compatibilité avec l'interface existante
+    def query(self, texte_requete: str, n_results: int = config.MAX_RESULTS) -> list[dict]:
+        return self.rechercher(texte_requete, n_results)
+
+    def compter(self) -> int:
         return self.collection.count()
 
-    def reset(self) -> None:
-        self.client.delete_collection(self.COLLECTION_NAME)
+    # Alias pour compatibilité avec l'interface existante
+    def count(self) -> int:
+        return self.compter()
+
+    def reinitialiser(self) -> None:
+        self.client.delete_collection(self.NOM_COLLECTION)
         self.collection = self.client.get_or_create_collection(
-            name=self.COLLECTION_NAME,
+            name=self.NOM_COLLECTION,
             metadata={"hnsw:space": "cosine"},
         )
+
+    # Alias pour compatibilité avec l'interface existante
+    def reset(self) -> None:
+        return self.reinitialiser()
